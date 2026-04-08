@@ -1,61 +1,67 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shree Ram Hospital Management System</title><style>
-body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#e8f0ff,#f9fbff);margin:0}
-.container{max-width:650px;margin:40px auto;background:white;padding:22px;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.08)}
-h2{text-align:center;color:#0b3d91}
-input,textarea{width:100%;padding:12px;margin:8px 0;border:1px solid #ccd6f6;border-radius:8px;font-size:14px}
-button{width:100%;padding:12px;background:#0b5ed7;color:white;border:none;border-radius:8px;margin-top:10px;font-weight:600}
-button:hover{background:#084298}
-.logout{background:#dc3545}
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Shree Ram Hospital</title>
+
+<style>
+body{font-family:Arial;background:#eef3ff}
+.container{max-width:900px;margin:40px auto;background:white;padding:20px;border-radius:12px}
+input,textarea{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:6px}
+button{padding:8px 12px;margin:4px;background:#0b5ed7;color:white;border:none;border-radius:6px}
 .hidden{display:none}
-.billBox{background:#f1f5ff;padding:14px;border-radius:10px;margin-top:12px;line-height:1.6}
-.counter{font-weight:bold;color:#198754}
-.money{font-weight:bold;color:#d63384}
-.tableBox{overflow:auto}
-table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ddd;padding:8px;text-align:center}
-th{background:#0b5ed7;color:white}
-.editBtn{background:#ffc107}
-.deleteBtn{background:#dc3545;color:white}
-</style></head>
-<body><!-- LOGIN --><div class="container" id="loginBox">
-<h2>Shree Ram Hospital Login</h2>
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
+.logout{background:#dc3545}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{border:1px solid #ddd;padding:6px;text-align:center}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="container" id="loginBox">
+<h2>Hospital Login</h2>
+<input id="email" placeholder="Enter Email">
+<input id="password" type="password" placeholder="Enter Password">
 <button onclick="loginUser()">Login</button>
-</div><!-- OPERATOR PANEL --><div class="container hidden" id="operatorPanel">
-<h2>Operator Dashboard</h2>
-<div class="counter">Total New OPD: <span id="opdCount">0</span></div>
-<div class="money">Total OPD Amount: ₹ <span id="totalAmount">0</span></div>
-<button onclick="showNewPatient()">New Patient Entry</button>
-<button onclick="showAdminPanel()">View All OPD Data</button>
+</div>
+
+
+<!-- OPERATOR PANEL -->
+<div class="container hidden" id="operatorPanel">
+<h2>Operator Panel</h2>
+<button onclick="showForm()">Add Patient</button>
 <button class="logout" onclick="logoutUser()">Logout</button>
-</div><!-- DOCTOR PANEL --><div class="container hidden" id="doctorPanel">
+</div>
+
+
+<!-- DOCTOR PANEL -->
+<div class="container hidden" id="doctorPanel">
 <h2>Doctor Panel</h2>
 <input id="doctorToken" placeholder="Enter Token">
-<button onclick="doctorSearch()">Search Patient</button>
 <div id="doctorData"></div>
-<textarea id="doctorMedicine" placeholder="Write Medicines"></textarea>
-<button onclick="saveMedicine()">Submit Medicine</button>
-<button onclick="showAdminPanel()">View All OPD Data</button>
+<textarea id="doctorMedicine" placeholder="Write Medicine"></textarea>
+<button onclick="saveMedicine()">Save Medicine</button>
 <button class="logout" onclick="logoutUser()">Logout</button>
-</div><!-- MEDICAL PANEL --><div class="container hidden" id="medicalPanel">
-<h2>Medical Store Panel</h2>
+</div>
+
+
+<!-- MEDICAL PANEL -->
+<div class="container hidden" id="medicalPanel">
+<h2>Medical Panel</h2>
 <input id="medicalToken" placeholder="Enter Token">
-<input id="medicoName" placeholder="Enter Medico Name">
-<button onclick="medicalSearch()">Load Patient Details</button>
 <div id="medicalData"></div>
-<input id="paymentAmount" placeholder="Enter Payment Amount">
-<button onclick="savePayment()">Generate Bill & Download</button>
-<button onclick="showAdminPanel()">View All OPD Data</button>
+<input id="amount" placeholder="Enter Amount">
+<button onclick="saveMedical()">Save & Print Bill</button>
 <button class="logout" onclick="logoutUser()">Logout</button>
-</div><!-- ADMIN PANEL --><div class="container hidden" id="adminPanel">
-<h2>All OPD Register (Admin)</h2>
-<input id="adminSearch" placeholder="Search Token / Name / Mobile" onkeyup="filterAdminTable()">
-<div class="tableBox">
+</div>
+
+
+<!-- ADMIN PANEL -->
+<div class="container hidden" id="adminPanel">
+<h2>Admin Dashboard</h2>
+
 <table>
 <thead>
 <tr>
@@ -64,255 +70,296 @@ th{background:#0b5ed7;color:white}
 <th>Age</th>
 <th>Mobile</th>
 <th>Problem</th>
-<th>Fees</th>
-<th>Edit</th>
-<th>Delete</th>
+<th>Medicine</th>
+<th>Payment</th>
+<th>Action</th>
 </tr>
 </thead>
+
 <tbody id="adminTable"></tbody>
 </table>
-</div>
-<button class="logout" onclick="logoutUser()">Logout</button>
-</div><!-- NEW PATIENT FORM --><div class="container hidden" id="patientForm">
-<h2>New Patient Entry</h2>
-<input id="pname" placeholder="Patient Name">
-<input id="page" placeholder="Age">
-<input id="pmobile" placeholder="Mobile">
-<textarea id="pproblem" placeholder="Problem"></textarea>
-<button onclick="savePatient()">Submit</button>
-</div><script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+<button class="logout" onclick="logoutUser()">Logout</button>
+</div>
+
+
+<!-- ADD PATIENT FORM -->
+<div class="container hidden" id="formBox">
+<h2>New Patient Entry</h2>
+<input id="name" placeholder="Patient Name">
+<input id="age" placeholder="Age">
+<input id="mobile" placeholder="Mobile">
+<textarea id="problem" placeholder="Problem"></textarea>
+<button onclick="savePatient()">Save Patient</button>
+</div>
+
+
+
+<script type="module">
+
+import {initializeApp}
+from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+
+import {
+getAuth,
+signInWithEmailAndPassword,
+signOut,
+onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+
+import {
+getFirestore,
+collection,
+addDoc,
+getDocs,
+query,
+where,
+doc,
+getDoc,
+updateDoc,
+deleteDoc,
+runTransaction
+}
+from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
 
 const firebaseConfig={
 apiKey:"AIzaSyC6yZaFY3I1BBXj7vwEhOit_58Uq1owtRg",
 authDomain:"hospital-management-syst-cbfad.firebaseapp.com",
-projectId:"hospital-management-syst-cbfad",
-storageBucket:"hospital-management-syst-cbfad.firebasestorage.app",
-messagingSenderId:"187348484867",
-appId:"1:187348484867:web:26fbdff5e777a8fbdb9f36"
+projectId:"hospital-management-syst-cbfad"
 };
 
 const app=initializeApp(firebaseConfig);
 const auth=getAuth(app);
 const db=getFirestore(app);
 
-let tokenCounter=1;
+let docId="";
 let currentPatient={};
-let currentPrescription="";
-let adminData=[];
 
-function generateToken(){
-let token="RAM"+String(tokenCounter).padStart(2,'0');
-tokenCounter++;
-return token;
+
+window.loginUser=async()=>{
+await signInWithEmailAndPassword(auth,email.value,password.value);
+};
+
+
+window.logoutUser=()=>{
+signOut(auth);
+location.reload();
+};
+
+
+async function generateToken(){
+
+const ref=doc(db,"settings","tokenCounter");
+
+return await runTransaction(db,async(tx)=>{
+
+const snap=await tx.get(ref);
+
+let val=1;
+
+if(snap.exists()){
+const data=snap.data();
+if(typeof data.value==="number") val=data.value;
 }
 
-// AUTO LOGIN SESSION
-onAuthStateChanged(auth, async(user)=>{
-if(user){
-let email=user.email;
-let roleSnap=await getDoc(doc(db,"users",email));
+let token="RAM"+String(val).padStart(3,"0");
 
-if(roleSnap.exists()){
-let role=roleSnap.data().role;
+tx.set(ref,{value:val+1},{merge:true});
+
+return token;
+
+});
+}
+
+
+onAuthStateChanged(auth,async(user)=>{
+
+if(!user) return;
+
+const roleDoc=await getDoc(doc(db,"users",user.email));
+
+if(!roleDoc.exists()){
+alert("User role missing in Firestore");
+return;
+}
+
+const role=roleDoc.data().role;
+
 loginBox.classList.add("hidden");
 
-if(role==="operator"){
-operatorPanel.classList.remove("hidden");
-loadDashboardStats();
-}
-else if(role==="doctor") doctorPanel.classList.remove("hidden");
-else if(role==="medical") medicalPanel.classList.remove("hidden");
-else if(role==="admin"){
-adminPanel.classList.remove("hidden");
-loadAdminData();
-}
-}
-}
-});
-
-// LOGIN
-window.loginUser=async()=>{
-let email=document.getElementById("email").value;
-let pass=document.getElementById("password").value;
-await signInWithEmailAndPassword(auth,email,pass);
-}
-
-// LOGOUT
-window.logoutUser=()=>{signOut(auth);location.reload();}
-
-// SHOW ADMIN PANEL FROM OTHER ROLES
-window.showAdminPanel=()=>{
 operatorPanel.classList.add("hidden");
 doctorPanel.classList.add("hidden");
 medicalPanel.classList.add("hidden");
-adminPanel.classList.remove("hidden");
-loadAdminData();
+adminPanel.classList.add("hidden");
+
+if(role==="operator") operatorPanel.classList.remove("hidden");
+
+else if(role==="doctor"){
+doctorPanel.classList.remove("hidden");
+doctorAuto();
 }
 
-// SHOW NEW PATIENT FORM
-window.showNewPatient=()=>patientForm.classList.remove("hidden");
+else if(role==="medical"){
+medicalPanel.classList.remove("hidden");
+medicalAuto();
+}
 
-// SAVE PATIENT
+else if(role==="admin"){
+adminPanel.classList.remove("hidden");
+loadAdmin();
+}
+
+});
+
+
+window.showForm=()=>{
+operatorPanel.classList.add("hidden");
+formBox.classList.remove("hidden");
+};
+
+
 window.savePatient=async()=>{
-let token=generateToken();
+
+let n=document.getElementById("name").value.trim();
+let a=document.getElementById("age").value.trim();
+let m=document.getElementById("mobile").value.trim();
+let p=document.getElementById("problem").value.trim();
+
+if(!n||!a||!m||!p) return alert("Fill all fields");
+
+let token=await generateToken();
+
 await addDoc(collection(db,"patients"),{
-name:pname.value,
-age:page.value,
-mobile:pmobile.value,
-problem:pproblem.value,
-token:token,
-fees:500,
+name:n,
+age:a,
+mobile:m,
+problem:p,
+token,
+medicine:"",
+payment:"",
 date:new Date()
 });
-alert("Token Generated: "+token);
-loadDashboardStats();
-}
 
-// LOAD DASHBOARD STATS
-async function loadDashboardStats(){
-let snap=await getDocs(collection(db,"patients"));
-opdCount.innerText=snap.size;
-totalAmount.innerText=snap.size*500;
-}
+alert("Token: "+token);
 
-// DOCTOR SEARCH
-window.doctorSearch=async()=>{
-let q=query(collection(db,"patients"),where("token","==",doctorToken.value));
+formBox.classList.add("hidden");
+operatorPanel.classList.remove("hidden");
+
+};
+
+
+function doctorAuto(){
+
+setInterval(async()=>{
+
+if(!doctorToken.value) return;
+
+let q=query(collection(db,"patients"),
+where("token","==",doctorToken.value));
+
 let snap=await getDocs(q);
 
-snap.forEach(doc=>{
-currentPatient=doc.data();
-doctorData.innerHTML=`<div class='billBox'>
-<b>Shree Ram Hospital</b><br>
-Patient: ${currentPatient.name}<br>
-Age: ${currentPatient.age}<br>
-Mobile: ${currentPatient.mobile}<br>
-Problem: ${currentPatient.problem}<br>
-Fees: ₹${currentPatient.fees}</div>`;
+snap.forEach(s=>{
+docId=s.id;
+currentPatient=s.data();
+
+doctorData.innerHTML=
+currentPatient.name+"<br>"+currentPatient.problem;
 });
+
+},800);
 }
 
-// SAVE MEDICINE
+
 window.saveMedicine=async()=>{
-await addDoc(collection(db,"medicines"),{
-token:doctorToken.value,
-medicine:doctorMedicine.value,
-date:new Date()
+await updateDoc(doc(db,"patients",docId),
+{medicine:doctorMedicine.value});
+alert("Medicine Saved");
+};
+
+
+function medicalAuto(){
+
+setInterval(async()=>{
+
+if(!medicalToken.value) return;
+
+let q=query(collection(db,"patients"),
+where("token","==",medicalToken.value));
+
+let snap=await getDocs(q);
+
+snap.forEach(s=>{
+docId=s.id;
+currentPatient=s.data();
+
+medicalData.innerHTML=
+currentPatient.name+"<br>"+
+currentPatient.problem+"<br>"+
+currentPatient.medicine;
 });
-alert("Medicine Saved Successfully");
+
+},800);
 }
 
-// MEDICAL SEARCH
-window.medicalSearch=async()=>{
-let token=medicalToken.value;
-let p=query(collection(db,"patients"),where("token","==",token));
-let ps=await getDocs(p);
-ps.forEach(d=>currentPatient=d.data());
 
-let m=query(collection(db,"medicines"),where("token","==",token));
-let ms=await getDocs(m);
-ms.forEach(d=>currentPrescription=d.data().medicine);
+window.saveMedical=async()=>{
 
-medicalData.innerHTML=`<div class='billBox'>
-<b>Shree Ram Hospital</b><br>
+await updateDoc(doc(db,"patients",docId),
+{payment:amount.value});
+
+let w=window.open("");
+
+w.document.write(`
+<h2 style="text-align:center">SHREE RAM HOSPITAL</h2>
 Patient: ${currentPatient.name}<br>
-Age: ${currentPatient.age}<br>
-Mobile: ${currentPatient.mobile}<br>
 Problem: ${currentPatient.problem}<br>
-Fees: ₹${currentPatient.fees}<br><br>
-Prescription:<br>${currentPrescription}</div>`;
-}
+Medicine: ${currentPatient.medicine}<br>
+Amount: ₹${amount.value}
+<script>window.print()
+`);
 
-// SAVE PAYMENT
-window.savePayment=async()=>{
-let token=medicalToken.value;
-let medico=medicoName.value;
-let amount=paymentAmount.value;
+};
 
-await addDoc(collection(db,"payments"),{
-token,patient:currentPatient.name,medico,amount,date:new Date()
-});
 
-let bill=`SHREE RAM HOSPITAL\nToken:${token}\nPatient:${currentPatient.name}\nMedico:${medico}\nAmount:₹${amount}`;
-let blob=new Blob([bill],{type:"text/plain"});
-let link=document.createElement("a");
-link.href=URL.createObjectURL(blob);
-link.download="Bill-"+token+".txt";
-link.click();
-
-alert("Bill Downloaded Successfully");
-}
-
-// LOAD ADMIN DATA
-window.loadAdminData=async()=>{
-adminData=[];
-adminTable.innerHTML="";
+async function loadAdmin(){
 
 let snap=await getDocs(collection(db,"patients"));
 
-snap.forEach(docSnap=>{
-let data={id:docSnap.id,...docSnap.data()};
-adminData.push(data);
-
-adminTable.innerHTML+=`
-<tr>
-<td>${data.token}</td>
-<td>${data.name}</td>
-<td>${data.age}</td>
-<td>${data.mobile}</td>
-<td>${data.problem}</td>
-<td>₹${data.fees}</td>
-<td><button class='editBtn' onclick="editPatient('${data.id}')">Edit</button></td>
-<td><button class='deleteBtn' onclick="deletePatient('${data.id}')">Delete</button></td>
-</tr>`;
-});
-}
-
-// FILTER ADMIN TABLE
-window.filterAdminTable=()=>{
-let v=adminSearch.value.toLowerCase();
 adminTable.innerHTML="";
-adminData.forEach(d=>{
-if(d.token.toLowerCase().includes(v)||d.name.toLowerCase().includes(v)||d.mobile.includes(v)){
+
+snap.forEach(d=>{
+
+let data=d.data();
+
 adminTable.innerHTML+=`
 <tr>
-<td>${d.token}</td>
-<td>${d.name}</td>
-<td>${d.age}</td>
-<td>${d.mobile}</td>
-<td>${d.problem}</td>
-<td>₹${d.fees}</td>
-<td><button class='editBtn' onclick="editPatient('${d.id}')">Edit</button></td>
-<td><button class='deleteBtn' onclick="deletePatient('${d.id}')">Delete</button></td>
-</tr>`;
-}
+<td>${data.token||""}</td>
+<td>${data.name||""}</td>
+<td>${data.age||""}</td>
+<td>${data.mobile||""}</td>
+<td>${data.problem||""}</td>
+<td>${data.medicine||""}</td>
+<td>${data.payment||""}</td>
+<td>
+<button onclick="deletePatient('${d.id}')">Delete</button>
+</td>
+</tr>
+`;
+
 });
 }
 
-// EDIT PATIENT
-window.editPatient=async(id)=>{
-let name=prompt("New Name");
-let age=prompt("New Age");
-let mobile=prompt("New Mobile");
-let problem=prompt("New Problem");
-if(!name)return;
-await updateDoc(doc(db,"patients",id),{name,age,mobile,problem});
-alert("Updated Successfully");
-loadAdminData();
-}
 
-// DELETE PATIENT
 window.deletePatient=async(id)=>{
-if(confirm("Delete this record?")){
+if(!confirm("Delete patient?")) return;
 await deleteDoc(doc(db,"patients",id));
-alert("Deleted Successfully");
-loadAdminData();
-}
-}
+loadAdmin();
+};
 
-</script></body>
-</html>
+</script>
+
+</body>
+  </html>
